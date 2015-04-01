@@ -142,7 +142,7 @@ class GDriveClient():
 	def get(self, src_file): 
 
 		# Get the file contents and write them to the temporary file 
-		file_id = "0ByFRov07IwByRmFCQ0dCb096cms"
+		file_id = "0ByFRov07IwByd3E4NV80alhGMzg"
 		file_contents = self.gauth.service.files().get_media(fileId=file_id).execute()
 
 		temp = tempfile.TemporaryFile()

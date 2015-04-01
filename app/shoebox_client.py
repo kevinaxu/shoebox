@@ -176,6 +176,11 @@ def arg_handler(shoebox):
 	Create an instance of Dropbox and Drive
 	Upload the the key to dropbox and the cipher to drive 
 	Delete the local file, key, and ciphertext 
+
+
+	Takes a file (Ex. cat.txt)
+	Create a temporary file that will hold the one time pad 
+	Create a temporary file that will hold the results of the encryption 
 	"""
 	otp = OneTimePad()
 	db = DropboxClient()
@@ -184,25 +189,27 @@ def arg_handler(shoebox):
 		#TODO: Check if that is a valid file in the CURRENT DIRECTORY
 		#TODO: Change this so that the padfile that is creatd is a temporary file 
 
-		# Generate a one time pad as a temporary file and use it to encrypt the plaintext 
-		# temp_key = otp.generate_padfile(pt)
-		otp.generate_padfile(pt, key)
-		otp.encrypt(pt, key, ct)
-
-		db.put(key, pt)
-		gd.put(ct, pt)
+		temp_key, temp_ct = otp.encrypt(pt, key)
+	
+		db.put(temp_key.name, pt)
+		gd.put(temp_ct.name, pt)
 
 		db.ls()
 		gd.ls()
+
+		temp_key.close()
+		temp_ct.close()
 	elif command == "download": 
 		# Get temporary files containing key and ct values of pt 
 		temp_key = db.get(pt)
 		temp_ct = gd.get(pt)
 
-		otp.decrypt(pt, temp_key, temp_ct)
+		temp_pt = otp.decrypt(pt, temp_key, temp_ct)
+		print temp_pt.read()
 		
 		temp_key.close()
 		temp_ct.close()
+		temp_pt.close()
 	elif command == "show": 
 		db.show()
 	else: 

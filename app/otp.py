@@ -1,5 +1,6 @@
 import os
 import sys 
+import tempfile
 
 class OneTimePad(): 
 
@@ -17,49 +18,43 @@ class OneTimePad():
 
 	# Given a file, create a padfile of the same length 
 	# Padfile will be non-readable binary file. Not a plaintext file 
-	def generate_padfile(self, plain_file, pad_file): 
+	def generate_padfile(self, plain_file): 
 
-		# Get the size of the plaintext file 
+		temp_key = tempfile.NamedTemporaryFile()
 		size = self.get_filesize(plain_file)
+		block_size = self.block_size 
 
-		# Create the padfile 
-		with open(pad_file, 'w') as otp: 
+		while size > 0: 
+			rand_fd = open(self.prng, 'r')
+			block = rand_fd.read(min(block_size, size))
+			temp_key.write(block)
+			size = size - len(block)
 
-			# random = self.random
-			block_size = self.block_size 
-			while size > 0: 
-				# Read random bytes from whatever the prng is 
-				rand_fd = open(self.prng, 'r')
-				block = rand_fd.read(min(block_size, size))
-				otp.write(block)
-				size = size - len(block)
+		temp_key.seek(0)
+		return temp_key 
 
-	def encrypt(self, plain_file, pad_file, cipher_file): 
-		with open(pad_file, 'r') as padfile: 
-			with open(plain_file, 'r') as textfile:
-				with open(cipher_file, 'w') as cipherfile: 
-					self.process(textfile, cipherfile, padfile)
+	"""
+	Encrypt will take the name of the plaintext file and the name of the ciphertext 
+	plain_text is the name of the plaintext file 
+	"""
+	def encrypt(self, plain_file, cipher_file): 
 
-	#def encrypt(self, plain_file, pad_file, cipher_file): 
-		#with open(pad_file, 'r') as padfile: 
-			#with open(plain_file, 'r') as textfile:
-				## Check fi the sizes are the same? 
-				#with open(cipher_file, 'w') as cipherfile: 
-					#self.process(textfile, cipherfile, padfile)
+		# Generate the key and keep it in a temporary file 
+		temp_key = self.generate_padfile(plain_file)
+
+		with open(plain_file, 'r') as textfile: 
+			temp_ct = self.encrypt_process(textfile, temp_key)
+
+		return (temp_key, temp_ct)
+
 		
 	"""
 	Decrypt behavior is a little bit strange. 
 	Takes multiple open temporary files 
 	"""
 	def decrypt(self, plain_file, key, ciphertext): 
-		with open(plain_file, 'w') as textfile: 
-			self.process(ciphertext, textfile, key)
-
-	#def decrypt(self, plain_file, pad_file, cipher_file): 
-		#with open(pad_file, 'r') as padfile: 
-			#with open(cipher_file, 'r') as cipherfile: 
-				#with open(plain_file, 'w') as textfile: 
-					#self.process(cipherfile, textfile, padfile)
+		temp_pt = self.decrypt_process(ciphertext, key)
+		return temp_pt 
 
 	# Takes three file descriptors. Reads from the input file and the pad file 
 	# and writes to the output file 
@@ -74,14 +69,33 @@ class OneTimePad():
 	# Basically, each corresponding byte of the two files are converted into their 
 	# ascii values, which are then bitwise XORed and converted back into string form. 
 	# Each of these new bytes is appended to the final processed string and written to file. 
-	def process(self, in_file, out_file, pad_file): 
+
+	# Creates a temporary file with the data and returns pointer to that 
+	def encrypt_process(self, in_file, pad_file): 
+		temp_out_file = tempfile.NamedTemporaryFile()
 		while True: 
 			data = in_file.read(self.block_size)
 			if not data: 
 				break
 			pad = pad_file.read(len(data))
 			encoded = ''.join([chr(ord(a) ^ ord(b)) for a, b in zip(data, pad)])
-			out_file.write(encoded)
+			temp_out_file.write(encoded)
+		temp_out_file.seek(0)
+		pad_file.seek(0)
+		return temp_out_file
+
+	# takes two temporary files and returns a pointer to another temporary file 
+	def decrypt_process(self, in_file, pad_file): 
+		temp_out_file = tempfile.TemporaryFile()
+		while True: 
+			data = in_file.read(self.block_size)
+			if not data: 
+				break
+			pad = pad_file.read(len(data))
+			encoded = ''.join([chr(ord(a) ^ ord(b)) for a, b in zip(data, pad)])
+			temp_out_file.write(encoded)
+		temp_out_file.seek(0)
+		return temp_out_file
 
 def main():
 	pt = "dog.txt"
@@ -97,3 +111,20 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+#def decrypt(self, plain_file, pad_file, cipher_file): 
+	#with open(pad_file, 'r') as padfile: 
+		#with open(cipher_file, 'r') as cipherfile: 
+			#with open(plain_file, 'w') as textfile: 
+				#self.process(cipherfile, textfile, padfile)
+
+		#with open(pad_file, 'r') as padfile: 
+			#with open(plain_file, 'r') as textfile:
+				#with open(cipher_file, 'w') as cipherfile: 
+					#self.process(textfile, cipherfile, padfile)
+	#def encrypt(self, plain_file, pad_file, cipher_file): 
+		#with open(pad_file, 'r') as padfile: 
+			#with open(plain_file, 'r') as textfile:
+				## Check fi the sizes are the same? 
+				#with open(cipher_file, 'w') as cipherfile: 
+					#self.process(textfile, cipherfile, padfile)
