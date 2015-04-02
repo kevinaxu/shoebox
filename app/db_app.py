@@ -96,54 +96,35 @@ class DropboxClient():
 	def rm(self, path): 
 		self.api_client.file_delete(self.current_path + "/" + path)
 
-	# def do_put(self, from_path, to_path):
-	def put(self, src_file, new_file_name): 
-		"""
-		Copy local file to Dropbox
+	"""
+	Copy local file to Dropbox
 
-		Examples:
-		Dropbox> put ~/test.txt dropbox-copy-test.txt
-		"""
+	Examples:
+	Dropbox> put ~/test.txt dropbox-copy-test.txt
+	"""
+	def put(self, src_file, new_file_name): 
 		from_file = open(os.path.expanduser(src_file), "rb")
 		self.api_client.put_file(self.current_path + "/" + new_file_name, from_file)
 		
-		#from_file = open(os.path.expanduser(from_path), "rb")
-
-		#encoding = locale.getdefaultlocale()[1] or 'ascii'
-		#full_path = (self.current_path + "/" + to_path).decode(encoding)
-		#self.api_client.put_file(full_path, from_file)
-
-	# def cat(self, src_file): 
 
 	""" 
 	get is a little bit special. 
 	It takes the name of the src_file, and writes to a temporary file
 	this is then passed to the shoebox client, which reads from the temporary files
 	to reconstruct the file
-	"""
-	def get(self, src_file): 
-		# to_file = open(os.path.expanduser(src_file), "wb")
 
-		temp = tempfile.TemporaryFile()
-		f = self.api_client.get_file(self.current_path + "/" + src_file)
-		temp.write(f.read())
-		temp.seek(0)
-		#print temp.read()
-		#temp.close()
-		return temp
-
-		"""
 	def do_get(self, from_path, to_path):
 		Copy file from Dropbox to local file and print out the metadata.
 
 		Examples:
 		Dropbox> get file.txt ~/dropbox-file.txt
 		to_file = open(os.path.expanduser(to_path), "wb")
-
-		f, metadata = self.api_client.get_file_and_metadata(self.current_path + "/" + from_path)
-		#print 'Metadata:', metadata
-		#to_file.write(f.read())
-		"""
+	"""
+	def get(self, src_file): 
+		temp = tempfile.TemporaryFile()
+		f = self.api_client.get_file(self.current_path + "/" + src_file)
+		temp.write(f.read())
+		return temp.seek(0)
 
 def main():
 	db = DropboxClient()

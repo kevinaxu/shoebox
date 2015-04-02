@@ -27,6 +27,7 @@ class GDriveClient():
 		self.shoebox_id = "0ByFRov07IwByX25CRWZ6Qi1jbzQ"
 		self.current_path_name = ''
 		self.current_path_id = ''
+		self.current_dir_id = ''
 
 	def load_credentials(self): 
 		#  Try to load saved client credentials
@@ -47,14 +48,35 @@ class GDriveClient():
 	# In the current directory? 
 	# TODO: Change from using pydrive? 
 	def ls(self): 
-		file_list = self.drive.ListFile({'q': "'%s' in parents and trashed=false" 
-			% self.shoebox_id}).GetList()
-		for f in file_list: 
-			if self.is_dir(f): 
-				print f['id'] + " " + self.colors['blue'] + f['title'] + self.colors['native']
-			else: 
-				print f['id'] + " " + f['title']
-			#print 'title: %s, id: %s' % (f['title'], f['id'])
+		page_token = None
+
+		# TODO: Put this in anotehr directory 
+		folder_id = os.path.basename(self.current_path_id)
+		if self.current_path_name == '': 
+			folder_id = self.shoebox_id
+
+		while True:
+			try:
+				param = {}
+				param['q'] = "trashed=false"
+				if page_token:
+					param['pageToken'] = page_token
+				children = self.gauth.service.children().list(folderId=folder_id, **param).execute()
+
+				for child in children.get('items', []):
+					print 'File Id: %s' % child['id']
+					child_name = self.get_filename_from_id(child['id'])
+					print 'File title: %s' % child_name
+				page_token = children.get('nextPageToken')
+				if not page_token:
+					break
+			except errors.HttpError, error:
+				print 'An error occurred: %s' % error
+				break
+
+	def pwd(self): 
+		print "/shoebox" + self.current_path_name
+		print "/" + self.shoebox_id + self.current_path_id
 	
 	# TODO: delete this if the only place this is used is in ls 
 	def is_dir(self, f): 
@@ -73,10 +95,16 @@ class GDriveClient():
 			# Don't change directory if we're already at root 
 			self.current_path_name = "/".join(self.current_path_name.split("/")[0:-1])
 			self.current_path_id = "/".join(self.current_path_id.split("/")[0:-1])
+		# Need the name of the folder you're going into
+		# as well as the id of the folder 
 		else: 
 			print 2
-			# self.current_path_name += "/" + path 
-			# self.current_path_id += "/" + self.find_id(path)
+			folder_id = self.get_id_from_filename(path)
+			if folder_id: 
+				self.current_path_name += "/" + path 
+				self.current_path_id += "/" + folder_id
+			else: 
+				print "Not a folder"
 
 	# Make a directory with [folder_name] in the current directory 
 	# def mkdir(self, folder_name, parent_id=None): 
@@ -98,22 +126,32 @@ class GDriveClient():
 			return None
 
 	# Find the id of the file/directory in the current directory 
-	def find_id(self, f): 
+	# Do a query where the parent is 
+	def get_id_from_filename(self, file_name): 
+		#parent_id = os.path.basename(self.current_path_id)
+		#print self.current_path_name
+
 		parent_id = os.path.basename(self.current_path_id)
-		print self.current_path_name
-		"""
 		if self.current_path_name == '': 
 			parent_id = self.shoebox_id
 
-		q_str = {'q': "title='%s' and '%s' in parents" % (f, parent_id)}
+		q_str = {'q': "title='%s' and '%s' in parents" 
+				% (file_name, parent_id)}
 		return_fields = "items(id, title, parents)"
 		f_metadata = self.gauth.service.files().list(fields=return_fields, **q_str).execute()
+		
+		#print "looking for file name: " + file_name
+		#print f_metadata['items'][0]['id']
 
 		if f_metadata['items']: 
 			return f_metadata['items'][0]['id']
 		else: 
-			return False
-		"""
+			return False 
+
+	# TODO: Limit the amount of metadata returned from 
+	def get_filename_from_id(self, file_id):
+			file_obj = self.gauth.service.files().get(fileId=file_id).execute()
+			return file_obj['title']
 
 	def put(self, src_file, new_file_name):
 		media_body = MediaFileUpload(src_file, mimetype="text/plain", resumable=True)
@@ -153,12 +191,15 @@ class GDriveClient():
 
 def main():
 	gd = GDriveClient()
+	gd.cd("new-new-folder")
+	gd.pwd()
 	gd.ls()
+
 	#gd.get("cat.txt")
 	#print "\n"
-	gd.put("dog.txt.ct", "dog.txt")
-	print "\n"
-	gd.ls()
+	#gd.put("dog.txt.ct", "dog.txt")
+	#print "\n"
+	#gd.ls()
 
 	#gd.cd("new-new-folder")
 	#gd.ls()

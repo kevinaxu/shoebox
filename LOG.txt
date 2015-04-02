@@ -139,6 +139,9 @@ GIT
 Untracked every file that is now in .gitignore:
 http://stackoverflow.com/questions/1139762/ignore-files-that-have-already-been-committed-to-a-git-repository/1139797#1139797
 
+Google Drive as an interconnected net: 
+https://groups.google.com/forum/#!topic/grive-devel/Zcd83MYCpOc
+
 
 
 

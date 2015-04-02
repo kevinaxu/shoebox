@@ -36,18 +36,17 @@ class ShoeboxShell(cmd.Cmd):
 
 	# TODO: if there is an argument after ls then ls that directory 
 	def do_ls(self, args):
-		print "whats up"
 		"""
 		list directory contents
 
 		Examples:
 		shoebox> ls [dir]
 		"""
+		self.db.ls()
 
 	def do_pwd(self, args): 
 		"""return the current directory path"""
-		curr_dir = "/shoebox" + self.current_path
-		self.stdout.write('%s\n' % curr_dir)
+		print "/shoebox" + self.current_path
 
 	# TODO: fix errors of cd into a direcotry that is not there 
 	def do_cd(self, args):
@@ -177,7 +176,6 @@ def arg_handler(shoebox):
 	Upload the the key to dropbox and the cipher to drive 
 	Delete the local file, key, and ciphertext 
 
-
 	Takes a file (Ex. cat.txt)
 	Create a temporary file that will hold the one time pad 
 	Create a temporary file that will hold the results of the encryption 
@@ -204,8 +202,8 @@ def arg_handler(shoebox):
 		temp_key = db.get(pt)
 		temp_ct = gd.get(pt)
 
-		temp_pt = otp.decrypt(pt, temp_key, temp_ct)
-		print temp_pt.read()
+		temp_pt = otp.decrypt(temp_key, temp_ct)
+		#print temp_pt.read()
 		
 		temp_key.close()
 		temp_ct.close()
@@ -215,16 +213,6 @@ def arg_handler(shoebox):
 	else: 
 		shoebox.cmdloop()
 
-
-	""" 
-	Takes a file (Ex. cat.txt, cat)
-	Download the file contents of the key and store it in a temporary file 
-	Decrypt using the file pointers of the temp file to produce the actual file 
-
-	Make temp files for the key and ciphertext 
-	Create the plaintext using the two temp files 
-	Delete the temporary files 
-	"""
 def main():
 	shoebox = ShoeboxShell()
 	arg_handler(shoebox)

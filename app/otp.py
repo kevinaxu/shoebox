@@ -43,7 +43,7 @@ class OneTimePad():
 		temp_key = self.generate_padfile(plain_file)
 
 		with open(plain_file, 'r') as textfile: 
-			temp_ct = self.encrypt_process(textfile, temp_key)
+			temp_ct = self.process(textfile, temp_key)
 
 		return (temp_key, temp_ct)
 
@@ -53,8 +53,7 @@ class OneTimePad():
 	Takes multiple open temporary files 
 	"""
 	def decrypt(self, plain_file, key, ciphertext): 
-		temp_pt = self.decrypt_process(ciphertext, key)
-		return temp_pt 
+		return self.process(ciphertext, key)
 
 	# Takes three file descriptors. Reads from the input file and the pad file 
 	# and writes to the output file 
@@ -69,9 +68,7 @@ class OneTimePad():
 	# Basically, each corresponding byte of the two files are converted into their 
 	# ascii values, which are then bitwise XORed and converted back into string form. 
 	# Each of these new bytes is appended to the final processed string and written to file. 
-
-	# Creates a temporary file with the data and returns pointer to that 
-	def encrypt_process(self, in_file, pad_file): 
+	def process(self, in_file, pad_file): 
 		temp_out_file = tempfile.NamedTemporaryFile()
 		while True: 
 			data = in_file.read(self.block_size)
@@ -85,17 +82,17 @@ class OneTimePad():
 		return temp_out_file
 
 	# takes two temporary files and returns a pointer to another temporary file 
-	def decrypt_process(self, in_file, pad_file): 
-		temp_out_file = tempfile.TemporaryFile()
-		while True: 
-			data = in_file.read(self.block_size)
-			if not data: 
-				break
-			pad = pad_file.read(len(data))
-			encoded = ''.join([chr(ord(a) ^ ord(b)) for a, b in zip(data, pad)])
-			temp_out_file.write(encoded)
-		temp_out_file.seek(0)
-		return temp_out_file
+	#def decrypt_process(self, in_file, pad_file): 
+		#temp_out_file = tempfile.TemporaryFile()
+		#while True: 
+			#data = in_file.read(self.block_size)
+			#if not data: 
+				#break
+			#pad = pad_file.read(len(data))
+			#encoded = ''.join([chr(ord(a) ^ ord(b)) for a, b in zip(data, pad)])
+			#temp_out_file.write(encoded)
+		#temp_out_file.seek(0)
+		#return temp_out_file
 
 def main():
 	pt = "dog.txt"
