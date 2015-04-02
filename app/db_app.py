@@ -68,11 +68,11 @@ class DropboxClient():
 			if self.current_path == '':
 				pass
 			self.current_path = "/".join(self.current_path.split("/")[0:-1])
-			# TODO: expand this line 
 		else:
 			self.current_path += "/" + path
 
 	def mv(self, src_file, target): 
+		"""move/rename a file or directory"""
 
 		f_metadata = self.api_client.metadata(self.current_path + "/" + target)
 
@@ -83,7 +83,7 @@ class DropboxClient():
 			if target == "../": 
 				to_file_path =  "/".join(self.current_path.split("/")[0:-1]) 
 			self.api_client.file_move(self.current_path + "/" + src_file,
-					to_file_path + "/" + os.path.basename(src_file))
+					to_file_path + "/" + src_file)
 
 		# If it's not a directory, just do a rename 
 		else: 
@@ -130,8 +130,15 @@ def main():
 	db = DropboxClient()
 	db.ls()
 	print "\n"
-	db.put("dog.txt.key", "dog.txt")
+	db.mv("new-dog.txt", "new-folder1")
 	db.ls()
+	db.cd("new-folder1")
+	print "\n"
+	db.ls()
+
+	#print "\n"
+	#db.put("dog.txt.key", "dog.txt")
+	#db.ls()
 
 	# db.get("cat.txt")
 	# db.put("mycreds.cipher")

@@ -49,11 +49,7 @@ class GDriveClient():
 	# TODO: Change from using pydrive? 
 	def ls(self): 
 		page_token = None
-
-		# TODO: Put this in anotehr directory 
-		folder_id = os.path.basename(self.current_path_id)
-		if self.current_path_name == '': 
-			folder_id = self.shoebox_id
+		folder_id = self.get_current_dir_id()
 
 		while True:
 			try:
@@ -64,9 +60,16 @@ class GDriveClient():
 				children = self.gauth.service.children().list(folderId=folder_id, **param).execute()
 
 				for child in children.get('items', []):
-					print 'File Id: %s' % child['id']
+					# print 'File Id: %s' % child['id']
+					# TODO: if this is the only place where get filename is used delete 
 					child_name = self.get_filename_from_id(child['id'])
-					print 'File title: %s' % child_name
+					child_file = self.gauth.service.files().get(fileId=child['id']).execute()
+					if child_file['mimeType'] == self.g_apps_folder: 
+						print self.colors['blue'] + child_name + self.colors['native']
+					else: 
+						print child_name
+
+					# print 'File title: %s' % child_name
 				page_token = children.get('nextPageToken')
 				if not page_token:
 					break
@@ -89,21 +92,18 @@ class GDriveClient():
 	# path is the actual name of the folder 
 	def cd(self, path): 
 		if path == "..": 
-			print 1
 			if self.current_path_name == '': 
 				pass
 			# Don't change directory if we're already at root 
 			self.current_path_name = "/".join(self.current_path_name.split("/")[0:-1])
 			self.current_path_id = "/".join(self.current_path_id.split("/")[0:-1])
-		# Need the name of the folder you're going into
-		# as well as the id of the folder 
 		else: 
-			print 2
 			folder_id = self.get_id_from_filename(path)
 			if folder_id: 
 				self.current_path_name += "/" + path 
 				self.current_path_id += "/" + folder_id
 			else: 
+				# THROW AN ACTUAL ERROR 
 				print "Not a folder"
 
 	# Make a directory with [folder_name] in the current directory 
@@ -115,34 +115,39 @@ class GDriveClient():
 				}
 		folder = self.gauth.service.files().insert(body=body).execute() 
 
-	def mv(service, file_id, new_name): 
-		try: 
-			f = service.files().get(fileId=file_id).execute()
-			f['title'] = new_name
-			updated_f = service.files().update(fileId=file_id, body=f).execute()
-			return updated_f
-		except errors.HttpError, error:
-			print 'An error occurred: %s' % error
-			return None
+	"""
+		rename a file
+		rename a directory
+		move a file to a directory
+		move a directory to a directory 
+
+		input: 
+			src_file: name of a file/dir
+			target: name of a file/dir 
+	"""
+	def mv(self, src_file, target): 
+
+		# To rename a file, first retrieve and then update the content 
+		file_id = self.get_id_from_filename(src_file)
+		f_resource = self.gauth.service.files().get(fileId=file_id).execute()
+		f_resource['title'] = target
+		updated_metadata = self.gauth.service.files().update(fileId=file_id, body=f_resource).execute()
+		if not updated_metadata: 
+			print "update failed"
+		else: 
+			print "update success"
 
 	# Find the id of the file/directory in the current directory 
 	# Do a query where the parent is 
 	def get_id_from_filename(self, file_name): 
-		#parent_id = os.path.basename(self.current_path_id)
-		#print self.current_path_name
 
-		parent_id = os.path.basename(self.current_path_id)
-		if self.current_path_name == '': 
-			parent_id = self.shoebox_id
+		parent_id = self.get_current_dir_id()
 
 		q_str = {'q': "title='%s' and '%s' in parents" 
 				% (file_name, parent_id)}
 		return_fields = "items(id, title, parents)"
 		f_metadata = self.gauth.service.files().list(fields=return_fields, **q_str).execute()
 		
-		#print "looking for file name: " + file_name
-		#print f_metadata['items'][0]['id']
-
 		if f_metadata['items']: 
 			return f_metadata['items'][0]['id']
 		else: 
@@ -152,6 +157,12 @@ class GDriveClient():
 	def get_filename_from_id(self, file_id):
 			file_obj = self.gauth.service.files().get(fileId=file_id).execute()
 			return file_obj['title']
+	
+	def get_current_dir_id(self): 
+		if self.current_path_name == '': 
+			return self.shoebox_id
+		else: 
+			return os.path.basename(self.current_path_id)
 
 	def put(self, src_file, new_file_name):
 		media_body = MediaFileUpload(src_file, mimetype="text/plain", resumable=True)
@@ -191,21 +202,11 @@ class GDriveClient():
 
 def main():
 	gd = GDriveClient()
-	gd.cd("new-new-folder")
-	gd.pwd()
+	gd.ls()
+	gd.mv("new-new-folder", "old-folder")
+	print "\n"
 	gd.ls()
 
-	#gd.get("cat.txt")
-	#print "\n"
-	#gd.put("dog.txt.ct", "dog.txt")
-	#print "\n"
-	#gd.ls()
-
-	#gd.cd("new-new-folder")
-	#gd.ls()
-
-	#gd.mkdir("test-dir")
-	#gd.ls()
 
 if __name__ == '__main__':
     main()
