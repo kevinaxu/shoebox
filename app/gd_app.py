@@ -65,9 +65,11 @@ class GDriveClient():
 					child_name = self.get_filename_from_id(child['id'])
 					child_file = self.gauth.service.files().get(fileId=child['id']).execute()
 					if child_file['mimeType'] == self.g_apps_folder: 
-						print self.colors['blue'] + child_name + self.colors['native']
+						print self.colors['blue'] + child_name + " " + child['id'] + self.colors['native']
+						#print self.colors['blue'] + child_name + self.colors['native']
 					else: 
-						print child_name
+						print child_name + " " + child['id']
+						#print child_name
 
 					# print 'File title: %s' % child_name
 				page_token = children.get('nextPageToken')
@@ -107,11 +109,10 @@ class GDriveClient():
 				print "Not a folder"
 
 	# Make a directory with [folder_name] in the current directory 
-	# def mkdir(self, folder_name, parent_id=None): 
 	def mkdir(self, folder_name): 
 		body = {'title': folder_name, 
 				'mimeType': self.g_apps_folder, 
-				'parents': [{'id': self.current_dir_id}]
+				'parents': [{'id': self.get_current_dir_id()}]
 				}
 		folder = self.gauth.service.files().insert(body=body).execute() 
 
@@ -127,15 +128,51 @@ class GDriveClient():
 	"""
 	def mv(self, src_file, target): 
 
-		# To rename a file, first retrieve and then update the content 
-		file_id = self.get_id_from_filename(src_file)
-		f_resource = self.gauth.service.files().get(fileId=file_id).execute()
-		f_resource['title'] = target
-		updated_metadata = self.gauth.service.files().update(fileId=file_id, body=f_resource).execute()
-		if not updated_metadata: 
-			print "update failed"
+		# Get the ID of the src_file and the target 
+		src_file_id = self.get_id_from_filename(src_file)
+		if not src_file_id: 
+			print "Error: Source file does not exist"
+			return False 
+
+		target_id = self.get_id_from_filename(target)
+
+		# If the target doesn't exist, then we're just doing a rename 
+		# If the target does exist, and it's a file, then ERROR
+		# If the target does exist, and it's a dir, put the file into the 
+		#	directory 
+		if target_id: 
+
+			target_dir = self.gauth.service.files().get(fileId=target_id).execute()
+			curr_dir_id = self.get_current_dir_id()
+
+			# If the target is a directory, then 
+			if target_dir['mimeType'] == self.g_apps_folder:
+
+				#Delete the old parent id of the src file 
+				self.gauth.service.parents().delete(fileId=src_file_id, parentId=curr_dir_id).execute()
+
+				# If moving up a directory, parent id is the parent 
+				parent_id = target_id 
+				if target == "../": 
+					parent_id = "/".join(self.current_path_id.split("/")[0:-1])
+				body = {'id': parent_id}
+
+				# Insert the new parent id 
+				self.gauth.service.parents().insert(fileId=src_file_id, body=body).execute()
+				print "Moved " + src_file + " to " + target
+			else: 
+				print "Error. File already exists"
 		else: 
-			print "update success"
+
+			print 3 
+			# To rename a file, first retrieve and then update the content 
+			f_resource = self.gauth.service.files().get(fileId=src_file_id).execute()
+			f_resource['title'] = target
+			updated_metadata = self.gauth.service.files().update(fileId=src_file_id, body=f_resource).execute()
+			if not updated_metadata: 
+				print "update failed"
+			else: 
+				print "update success"
 
 	# Find the id of the file/directory in the current directory 
 	# Do a query where the parent is 
@@ -143,7 +180,7 @@ class GDriveClient():
 
 		parent_id = self.get_current_dir_id()
 
-		q_str = {'q': "title='%s' and '%s' in parents" 
+		q_str = {'q': "title='%s' and '%s' in parents and trashed=false"
 				% (file_name, parent_id)}
 		return_fields = "items(id, title, parents)"
 		f_metadata = self.gauth.service.files().list(fields=return_fields, **q_str).execute()
@@ -203,49 +240,17 @@ class GDriveClient():
 def main():
 	gd = GDriveClient()
 	gd.ls()
-	gd.mv("new-new-folder", "old-folder")
+	#gd.mkdir("new-folder")
+	gd.mv("new-folder", "test")
 	print "\n"
 	gd.ls()
+
+	#gd.mv("new-folder", "test")
+	#print "\n"
+	#gd.ls()
+	#gd.mv("new-new-folder", "old-folder")
 
 
 if __name__ == '__main__':
     main()
-
-
-"""
-textfile = drive.CreateFile()
-textfile.SetContentFile('test-creds.txt')
-textfile.Upload()
-print textfile
-
-drive.CreateFile({'id':textfile['id']}).GetContentFile('test-creds-dl.txt')
-
-shoebox_id = "0ByFRov07IwByX25CRWZ6Qi1jbzQ"
-file_id = "0ByFRov07IwByRlAtODJpVTY1Vnc"
-curr_dir = shoebox_id
-dest_dir = {'id': "0ByFRov07IwByeVJza1VjZlpQczQ"}
-
-# Create a directory in a specific folder 
-folder_name = "new-new-folder"
-folder_id = create_dir(gauth.service, folder_name, shoebox_id)
-print folder_id 
-
-
-f = drive.CreateFile({"parents": [{"kind": "drive#fileLink", "id": shoebox_id}]})
-f.SetContentFile("mycreds.txt")
-f.Upload()
-
-# Move a file to another folder 
-def move_file(service, file_id, current_dir_id, dest_dir_id): 
-	dest_dir = {'id': dest_dir_id}
-	try: 
-		# Delete the old parent id 
-		service.parents().delete(fileId=file_id, parentId=curr_dir).execute()
-
-		# Insert the new parent id 
-		service.parents().insert(fileId=file_id, body=dest_dir).execute()
-	except errors.HttpError, error:
-		print 'An error occurred: %s' % error
-
-"""
 
