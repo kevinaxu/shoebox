@@ -51,27 +51,25 @@ class ShoeboxShell(cmd.Cmd):
 	# TODO: fix errors of cd into a direcotry that is not there 
 	def do_cd(self, args):
 		"""change current working directory"""
-		if len(args) != 2: 
+		if len(args) != 1: 
 			self.stdout.write(self.e_args + "\n")
+
 		path = args[0] 
 
-		#if path == "..": 
-			#if self.current_path == "":
-				#pass
-			#self.current_path = "/".join(self.current_path.split("/")[0:-1])
-			## TODO: expand this line 
-		#else:
-			#self.current_path += "/" + path
+		# TODO: Error checking if the directory does not exist/not a directory 
+		self.db.cd(path)
+		self.gd.cd(path)
 
 	def do_rm(self, args): 
-		# If f is a directory, 
-		#	self.do_rmdir(args)
-		# else: 
-		# db.rm(f)
 		""" 
 		remove directory entries
 		"""
-		db.rm(f)
+		if self.db.is_dir(path): 
+			confirm = raw_input("Deleting this directory will also remove all file contents. Proceed? (y/n)").strip()
+			if confirm == 'y':
+				self.db.rm(path)
+				self.gd.rm(path)
+
 	
 	def do_rmdir(self, args): 
 
@@ -97,6 +95,9 @@ class ShoeboxShell(cmd.Cmd):
 		#self.stdout.write(f.read())
 		#self.stdout.write("\n")
 
+	def do_mkdir(self, args): 
+		"""make directories"""
+		print "hello what up"
 
 	def do_help(self, args): 
 		for command in self.commands: 

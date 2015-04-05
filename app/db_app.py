@@ -73,6 +73,7 @@ class DropboxClient():
 
 	def mv(self, src_file, target): 
 		"""move/rename a file or directory"""
+		# TODO: Check if the src_file is there 
 
 		f_metadata = self.api_client.metadata(self.current_path + "/" + target)
 

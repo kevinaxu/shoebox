@@ -140,28 +140,40 @@ class GDriveClient():
 		# If the target does exist, and it's a file, then ERROR
 		# If the target does exist, and it's a dir, put the file into the 
 		#	directory 
+		curr_dir_id = self.get_current_dir_id()
 		if target_id: 
 
 			target_dir = self.gauth.service.files().get(fileId=target_id).execute()
-			curr_dir_id = self.get_current_dir_id()
 
 			# If the target is a directory, then 
 			if target_dir['mimeType'] == self.g_apps_folder:
 
 				#Delete the old parent id of the src file 
 				self.gauth.service.parents().delete(fileId=src_file_id, parentId=curr_dir_id).execute()
-
-				# If moving up a directory, parent id is the parent 
-				parent_id = target_id 
-				if target == "../": 
-					parent_id = "/".join(self.current_path_id.split("/")[0:-1])
-				body = {'id': parent_id}
+				body = {'id': target_id}
 
 				# Insert the new parent id 
 				self.gauth.service.parents().insert(fileId=src_file_id, body=body).execute()
 				print "Moved " + src_file + " to " + target
 			else: 
 				print "Error. File already exists"
+
+			print target_id 
+		elif target == "../": 
+			print 1 
+			#Delete the old parent id of the src file 
+			self.gauth.service.parents().delete(fileId=src_file_id, parentId=curr_dir_id).execute()
+
+			# TODO: There's probably a better way to do this 
+			parent_id = os.path.basename("/".join(self.current_path_id.split("/")[0:-1]))
+			if not parent_id: 
+				parent_id = self.shoebox_id 
+				
+			body = {'id': parent_id}
+			# print "Going to move the directory into folder with id: " + parent_id 
+
+			self.gauth.service.parents().insert(fileId=src_file_id, body=body).execute()
+			print "Moved " + src_file + " to " + self.get_filename_from_id(parent_id)
 		else: 
 
 			print 3 
@@ -236,20 +248,31 @@ class GDriveClient():
 		temp.seek(0)
 		return temp 
 
+	def rm(self, src_file):
+		file_id = self.get_id_from_filename(src_file)
+		self.gauth.service.files().delete(fileId=file_id).execute()
+
 
 def main():
 	gd = GDriveClient()
 	gd.ls()
-	#gd.mkdir("new-folder")
-	gd.mv("new-folder", "test")
+	gd.cd("folder1")
+	print "\n"
+	gd.ls()
+	gd.cd("folder3")
 	print "\n"
 	gd.ls()
 
-	#gd.mv("new-folder", "test")
-	#print "\n"
-	#gd.ls()
-	#gd.mv("new-new-folder", "old-folder")
-
+	gd.mv("folder4", "../")
+	gd.cd("..")
+	print "\n"
+	gd.ls()
+	
+	# gd.cd("folder1")
+	#gd.mv("dog.txt", "old-dog.txt")
+	#gd.mv("folder2", "folder3")
+	#gd.cd("folder1")
+	#gd.cd("folder3")
 
 if __name__ == '__main__':
     main()

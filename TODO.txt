@@ -88,8 +88,7 @@ The upload command is used to split the plaintext file into a one time pad and t
 Although using unnamed temporary files is the most secure way of dealing with intermediate stages, shoebox uses named temporary files, which are still deleted as soon as it is closed. 
 
 
-
-
+By building on top of existing cloud storage services, Shoebox enables the sharing of encrypted files between computers. Files uploaded to shoebox from a home computer can be decrypted and viewed on another computer, as long as the Shoebox client is present. This allows for convenient file storage without sacrificing security. 
 
 REFERENCES
 1. https://groups.google.com/forum/#!topic/grive-devel/Zcd83MYCpOc
