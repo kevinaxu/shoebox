@@ -1,14 +1,25 @@
 import os
 import sys 
 import tempfile
+import ConfigParser
 
 class OneTimePad(): 
 
 	def __init__(self):
-		self.block_size = 65536
-		self.prng = "/dev/urandom"
 
-	# Given a filename, return the filesize
+		# Read settings from config file 
+		parse = ConfigParser.ConfigParser()
+		parse.read("../config/app.ini")
+
+		self.block_size = parse.get("settings", "otp.block_size")
+		self.prng = parse.get("settings", "otp.prng")
+
+		#self.block_size = 65536
+		#self.prng = "/dev/urandom"
+
+	"""
+	Given a filename, return the filesize
+	"""
 	def get_filesize(self, file_name):
 		with open(file_name, 'r') as fd: 
 			fd.seek(0, 2)
@@ -16,8 +27,26 @@ class OneTimePad():
 			fd.seek(0, 0)
 			return n 
 
-	# Given a file, create a padfile of the same length 
-	# Padfile will be non-readable binary file. Not a plaintext file 
+	"""
+	Encrypt takes the name of the plaintext file to encrypt 
+	and the name of the ciphertext. It creates a padfile, 
+	processes them to get the resulting ciphertext. 
+	The padfile and ciphertext in the form of temporary, named
+	file descriptors, are returned as a tuple. 
+	"""
+	def encrypt(self, plain_file):
+
+		temp_key = self.generate_padfile(plain_file)
+
+		with open(plain_file, 'r') as textfile: 
+			temp_ct = self.process(textfile, temp_key)
+
+		return (temp_key, temp_ct)
+
+	"""
+	Given a filename, return a temporary named padfile. 
+	This padfile will be a non-readable binary file. 
+	"""
 	def generate_padfile(self, plain_file): 
 
 		temp_key = tempfile.NamedTemporaryFile()
@@ -32,20 +61,6 @@ class OneTimePad():
 
 		temp_key.seek(0)
 		return temp_key 
-
-	"""
-	Encrypt will take the name of the plaintext file and the name of the ciphertext 
-	plain_text is the name of the plaintext file 
-	"""
-	def encrypt(self, plain_file, cipher_file): 
-
-		# Generate the key and keep it in a temporary file 
-		temp_key = self.generate_padfile(plain_file)
-
-		with open(plain_file, 'r') as textfile: 
-			temp_ct = self.process(textfile, temp_key)
-
-		return (temp_key, temp_ct)
 
 		
 	"""
@@ -81,19 +96,6 @@ class OneTimePad():
 		pad_file.seek(0)
 		return temp_out_file
 
-	# takes two temporary files and returns a pointer to another temporary file 
-	#def decrypt_process(self, in_file, pad_file): 
-		#temp_out_file = tempfile.TemporaryFile()
-		#while True: 
-			#data = in_file.read(self.block_size)
-			#if not data: 
-				#break
-			#pad = pad_file.read(len(data))
-			#encoded = ''.join([chr(ord(a) ^ ord(b)) for a, b in zip(data, pad)])
-			#temp_out_file.write(encoded)
-		#temp_out_file.seek(0)
-		#return temp_out_file
-
 def main():
 	pt = "dog.txt"
 	ct = "mycreds.cipher"
@@ -108,20 +110,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-#def decrypt(self, plain_file, pad_file, cipher_file): 
-	#with open(pad_file, 'r') as padfile: 
-		#with open(cipher_file, 'r') as cipherfile: 
-			#with open(plain_file, 'w') as textfile: 
-				#self.process(cipherfile, textfile, padfile)
-
-		#with open(pad_file, 'r') as padfile: 
-			#with open(plain_file, 'r') as textfile:
-				#with open(cipher_file, 'w') as cipherfile: 
-					#self.process(textfile, cipherfile, padfile)
-	#def encrypt(self, plain_file, pad_file, cipher_file): 
-		#with open(pad_file, 'r') as padfile: 
-			#with open(plain_file, 'r') as textfile:
-				## Check fi the sizes are the same? 
-				#with open(cipher_file, 'w') as cipherfile: 
-					#self.process(textfile, cipherfile, padfile)

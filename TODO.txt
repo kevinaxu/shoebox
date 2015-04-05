@@ -71,24 +71,6 @@ Meeting
 - Remove all client secrets/etc from github repo 
 
 
-ESSAY
-
-One of the challenges encountered when designing the download command of Shoebox was where to store the decrypted files. If the key and ciphertext are combined and stored as a local file on disk, then the file is just as vulnerable as before the protocol is used. An attacker with access to the user’s computer would be able to see the contents of the file in plaintext. An early solution to this problem was to create an encrypted disk image (Mac OS only). When a file is downloaded and decrypted from Shoebox, the disk image is mounted and the file is written. The disk image is unmounted once all actions have completed. [The disk image is protected using the same master password as the Shoebox client.] 
-
-Although the Dropbox and Google Drive classes mostly contained the same functions, the differences in the APIs were clear. Using the Dropbox API was simple. Clear and comprehensive documentation was easy to find, and the Dropbox client library contained running code samples that covered many of the common core API calls. On the other hand, the Google Drive had minimal code samples, much of which only covered authentication. Documentation was also much less clear, and often times didn’t help even after finding the right page. Shoebox only supports Dropbox and Google Drive, but extending the project to other cloud service platforms would be as easy/difficult as the core API allows. 
-
-Part of this difficulty arises from the structure of Google Drive, which is not organized in a hierarchical tree, but rather an interconnected net of documents, files, and other collections attached to a single root point. Documents and files within this root point can also exist in other collections, which results in a complex web of relationships between resources [1].  
-
-
-
-Shoebox has four commands - upload, download, show, and shell. The show command recursively crawls the remote shoebox directory and displays the directory structure using ASCII characters. This command has a similar function to the Unix/Linux/Windows tree utility. 
-
-The upload command is used to split the plaintext file into a one time pad and the resulting ciphertext. In order to ensure security, intermediate stages are stored in temporary files which are deleted once the upload finishes. During upload, a one time pad of the same size as the plaintext is generated and stored as a temp file. The plaintext and one time pad are encrypted using bitwise XOR and the resulting cipher text is also stored in a temporary file. The key is then pushed to Dropbox while the ciphertext is pushed to Google Drive. Both of the temporary files are closed and deleted after the upload finishes, so there should be no period in time when they are stored on disk. The plaintext file that was uploaded is also deleted from the local machine. [moved to the uploads folder in the encrypted file disk]. 
-
-Although using unnamed temporary files is the most secure way of dealing with intermediate stages, shoebox uses named temporary files, which are still deleted as soon as it is closed. 
-
-
-By building on top of existing cloud storage services, Shoebox enables the sharing of encrypted files between computers. Files uploaded to shoebox from a home computer can be decrypted and viewed on another computer, as long as the Shoebox client is present. This allows for convenient file storage without sacrificing security. 
 
 REFERENCES
 1. https://groups.google.com/forum/#!topic/grive-devel/Zcd83MYCpOc

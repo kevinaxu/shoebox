@@ -143,6 +143,12 @@ Google Drive as an interconnected net:
 https://groups.google.com/forum/#!topic/grive-devel/Zcd83MYCpOc
 
 
+4/5/15
+======
+
+Python class vs instance variables: 
+http://stackoverflow.com/questions/2714573/instance-variables-vs-class-variables-in-python
+
 
 
 

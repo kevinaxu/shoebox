@@ -1,36 +1,18 @@
-import os
-import sys
+import os 
+from os.path import basename, expanduser
 import tempfile
-from os import listdir, sep
-from os.path import abspath, basename, isdir
-from StringIO import StringIO
 from dropbox import client, rest, session
 
 class DropboxClient(): 
 
 	ACCESS_TOKEN = "k6VdpVxf8QEAAAAAAAABe9s-cC-vm5NtlvcfBu53yParxIxK073xU5NjaA9goH92"
-	colors = {'green': '\033[1;32m', 
-			'blue': '\033[1;36m', 
-			'native': '\033[m'
-			}
 	
-	def __init__(self):
-		self.temp = "what up" 
+	def __init__(self, colors):
 		self.api_client = client.DropboxClient(self.ACCESS_TOKEN)
-
+		self.colors = colors
 		self.current_path = ''
 
-	def ls(self): 
-		client_path = self.api_client.metadata(self.current_path)
-
-		if 'contents' in client_path:
-			for f in client_path['contents']:
-				name = os.path.basename(f['path'])
-				if f['is_dir']: 
-					print self.colors['blue'] + name + self.colors['native']
-				else: 
-					print name 
-
+	""" Display the directory and file structure of the remote Dropbox directory """
 	def show(self, curr_dir='', padding='  '):
 
 		# Print out the directory name before printing files 
@@ -45,11 +27,11 @@ class DropboxClient():
 		files = client_path['contents']
 		count = 0
 
-		# Go through each file 
+		# Traverse files and either print names or recusively call
 		for f in files: 
 			count += 1
 			f_path = basename(f['path'])
-			path = curr_dir + sep + f_path
+			path = curr_dir + os.sep + f_path
 			if f['is_dir']:
 				if count == len(files):
 					self.show(path, padding + " ")
@@ -58,21 +40,34 @@ class DropboxClient():
 			else: 
 				print padding + "+-" + f_path
 
+	""" List the contents of the current directory """
+	def ls(self): 
+		client_path = self.api_client.metadata(self.current_path)
+
+		if 'contents' in client_path:
+			for f in client_path['contents']:
+				name = basename(f['path'])
+				if f['is_dir']: 
+					print self.colors['blue'] + name + self.colors['native']
+				else: 
+					print name 
+
 	# TODO: change from hardcoded "/shoebox" to whatever the user named the directory 
+	""" Return the working directory name """
 	def pwd(self): 
 		print "/shoebox" + self.current_path
 
+	""" Change directory to path """
 	def cd(self, path): 
 		if path == "..": 
-			# Don't change directory if we're already at root 
 			if self.current_path == '':
 				pass
 			self.current_path = "/".join(self.current_path.split("/")[0:-1])
 		else:
 			self.current_path += "/" + path
 
+	""" Move/rename a file or directory """ 
 	def mv(self, src_file, target): 
-		"""move/rename a file or directory"""
 		# TODO: Check if the src_file is there 
 
 		f_metadata = self.api_client.metadata(self.current_path + "/" + target)
@@ -91,35 +86,23 @@ class DropboxClient():
 			self.api_client.file_move(self.current_path + "/" + src_file, 
 					self.current_path + "/" + target)
 					
+	""" Make a directory """
 	def mkdir(self, dir_path): 
 		self.api_client.file_create_folder(self.current_path + "/" + dir_path)
 
+	""" Remove a file/directory entry """
 	def rm(self, path): 
 		self.api_client.file_delete(self.current_path + "/" + path)
 
-	"""
-	Copy local file to Dropbox
-
-	Examples:
-	Dropbox> put ~/test.txt dropbox-copy-test.txt
-	"""
+	""" Copy local file to Dropbox """
 	def put(self, src_file, new_file_name): 
-		from_file = open(os.path.expanduser(src_file), "rb")
-		self.api_client.put_file(self.current_path + "/" + new_file_name, from_file)
-		
+		from_file = open(expanduser(src_file), "rb") 
+		self.api_client.put_file(self.current_path + "/" + new_file_name, from_file) 
 
-	""" 
-	get is a little bit special. 
-	It takes the name of the src_file, and writes to a temporary file
-	this is then passed to the shoebox client, which reads from the temporary files
-	to reconstruct the file
+	""" Get a file from Dropbox 
 
-	def do_get(self, from_path, to_path):
-		Copy file from Dropbox to local file and print out the metadata.
-
-		Examples:
-		Dropbox> get file.txt ~/dropbox-file.txt
-		to_file = open(os.path.expanduser(to_path), "wb")
+		This command returns a descriptor to a temporary file containing
+		the contents of the file to get. 
 	"""
 	def get(self, src_file): 
 		temp = tempfile.TemporaryFile()
@@ -128,24 +111,18 @@ class DropboxClient():
 		return temp.seek(0)
 
 def main():
-	db = DropboxClient()
+	colors = {'green': '\033[1;32m', 
+			'blue': '\033[1;36m', 
+			'native': '\033[m'
+			}
+	db = DropboxClient(colors)
 	db.ls()
 	print "\n"
-	db.mv("new-dog.txt", "new-folder1")
-	db.ls()
-	db.cd("new-folder1")
-	print "\n"
-	db.ls()
-
-	#print "\n"
-	#db.put("dog.txt.key", "dog.txt")
+	#db.mv("new-dog.txt", "new-folder1")
 	#db.ls()
-
-	# db.get("cat.txt")
-	# db.put("mycreds.cipher")
+	#db.cd("new-folder1")
 	#print "\n"
 	#db.ls()
-	# db.mv("db-test-file.txt", "temp-folder")
 
 if __name__ == '__main__':
     main()

@@ -1,4 +1,5 @@
 *.pyc
 *.swp
 client_secrets.json
+mycreds.txt
 app.ini

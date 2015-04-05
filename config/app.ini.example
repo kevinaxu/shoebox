@@ -1,0 +1,10 @@
+[creds]
+dropbox.id = 
+dropbox.secret = 
+
+drive.id = 
+drive.secret = 
+
+[settings]
+otp.block_size = 65536
+otp.prng = /dev/urandom
