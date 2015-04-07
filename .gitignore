@@ -1,5 +1,7 @@
 *.pyc
 *.swp
+*.sparsebundle 
 client_secrets.json
+token_store.txt
 mycreds.txt
 app.ini

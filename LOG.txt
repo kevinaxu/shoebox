@@ -150,7 +150,14 @@ Python class vs instance variables:
 http://stackoverflow.com/questions/2714573/instance-variables-vs-class-variables-in-python
 
 
+4/6/15
+======
 
+Creating and mounting dmg files in terminal:
+http://www.maclife.com/article/columns/terminal_101_creating_and_mounting_dmg_files
+
+Expand the size of an encrypted dmg:
+http://apple.stackexchange.com/questions/172015/encrypt-folder-on-mac-without-dmg-file-so-that-the-contents-can-expand-in-size
 
 
 
