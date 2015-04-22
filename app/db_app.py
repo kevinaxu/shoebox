@@ -1,16 +1,20 @@
 import os 
+import ConfigParser 
 from os.path import basename, expanduser
 import tempfile
 from dropbox import client, rest, session
 
 class DropboxClient(): 
 
-	ACCESS_TOKEN = "k6VdpVxf8QEAAAAAAAABe9s-cC-vm5NtlvcfBu53yParxIxK073xU5NjaA9goH92"
-	
-	def __init__(self, colors):
-		self.api_client = client.DropboxClient(self.ACCESS_TOKEN)
-		self.colors = colors
+	def __init__(self):
+		self.colors = {'green': '\033[1;32m', 'blue': '\033[1;36m', 'native': '\033[m'}
 		self.current_path = ''
+
+		# Read settings from config file 
+		parse = ConfigParser.ConfigParser()
+		parse.read("../config/app.ini")
+		access_token = parse.get("creds", "dropbox.access_token")
+		self.api_client = client.DropboxClient(access_token)
 
 	""" Display the directory and file structure of the remote Dropbox directory """
 	def show(self, curr_dir='', padding='  '):
@@ -59,6 +63,12 @@ class DropboxClient():
 
 	""" Change directory to path """
 	def cd(self, path): 
+		
+		# Check if there is a valid directory named path in the current dir 
+		if not self.in_current_dir(path): 
+			self.e_path(path)
+			return False 
+
 		if path == "..": 
 			if self.current_path == '':
 				pass
@@ -66,9 +76,22 @@ class DropboxClient():
 		else:
 			self.current_path += "/" + path
 
+	""" Check if the path exists in the current directory """
+	def in_current_dir(self, path):
+		client_path = self.api_client.metadata(self.current_path)
+
+		if 'contents' in client_path:
+			for f in client_path['contents']:
+				name = basename(f['path'])
+				if path == name: 
+					return True
+		return False 
+
 	""" Move/rename a file or directory """ 
 	def mv(self, src_file, target): 
-		# TODO: Check if the src_file is there 
+
+		if not self.in_current_dir(src_file):
+			self.e_path(src_file)
 
 		f_metadata = self.api_client.metadata(self.current_path + "/" + target)
 
@@ -92,10 +115,14 @@ class DropboxClient():
 
 	""" Remove a file/directory entry """
 	def rm(self, path): 
+		if not self.in_current_dir(path):
+			self.e_path(path)
 		self.api_client.file_delete(self.current_path + "/" + path)
 
 	""" Copy local file to Dropbox """
 	def put(self, src_file, new_file_name): 
+		if not self.in_current_dir(src_file):
+			self.e_path(src_file)
 		from_file = open(expanduser(src_file), "rb") 
 		self.api_client.put_file(self.current_path + "/" + new_file_name, from_file) 
 
@@ -107,17 +134,31 @@ class DropboxClient():
 	def get(self, src_file): 
 		temp = tempfile.TemporaryFile()
 		f = self.api_client.get_file(self.current_path + "/" + src_file)
+
+		if not f: 
+			print "Error: " + src_file + " does not exist in Dropbox."
+			return False 
+
 		temp.write(f.read())
 		return temp.seek(0)
 
+	""" Error messages """
+	def e_path(self, path): 
+		print "Error: " + path + " does not exist in current directory."
+		return False 
+
+
 def main():
-	colors = {'green': '\033[1;32m', 
-			'blue': '\033[1;36m', 
-			'native': '\033[m'
-			}
-	db = DropboxClient(colors)
+	db = DropboxClient()
 	db.ls()
-	print "\n"
+	db.pwd()
+	db.cd("secret-fil")
+	db.ls()
+	db.pwd()
+	
+
+
+
 	#db.mv("new-dog.txt", "new-folder1")
 	#db.ls()
 	#db.cd("new-folder1")

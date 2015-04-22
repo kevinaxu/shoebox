@@ -6,14 +6,14 @@ from apiclient.http import MediaFileUpload
 
 class GDriveClient(): 
 
-	def __init__(self, colors):
+	def __init__(self):
 
 		# Abbreviate API calls 
 		self.gauth = GoogleAuth()
 		self.service = GoogleAuth().service
 
 		self.g_apps_folder = "application/vnd.google-apps.folder"
-		self.colors = colors
+		self.colors = {'green': '\033[1;32m', 'blue': '\033[1;36m', 'native': '\033[m'}
 
 		# TODO: Write a function that will do this automatically 
 		self.shoebox_id = "0ByFRov07IwByX25CRWZ6Qi1jbzQ"
@@ -207,11 +207,7 @@ class GDriveClient():
 
 
 def main():
-	colors = {'green': '\033[1;32m', 
-			'blue': '\033[1;36m', 
-			'native': '\033[m'
-			}
-	gd = GDriveClient(colors)
+	gd = GDriveClient()
 
 	gd.ls()
 	gd.cd("folder1")

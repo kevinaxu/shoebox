@@ -7,28 +7,23 @@ from otp import OneTimePad
 class ShoeboxShell(cmd.Cmd): 
 
 	intro = "Welcome to Shoebox! \nFor more information, enter `help` to list all avaliable commands"
-	colors = {'green': '\033[1;32m', 'blue': '\033[1;36m', 'native': '\033[m'}
 	commands = ["cd", "help", "ls", "mv", "pwd", "mkdir", "rm", "rmdir"]
 	e_args = "Error: Incorrect number of arguments"
 
 	def __init__(self):
 		cmd.Cmd.__init__(self)
 		self.current_path = ''
+		self.colors = {'green': '\033[1;32m', 'blue': '\033[1;36m', 'native': '\033[m'}
 		self.prompt = self.colors['green'] + "shoebox> " + self.colors['native']
 
 		# Initialize classes 
-		self.db = DropboxClient(self.colors)
-		self.gd = GDriveClient(self.colors)
+		self.db = DropboxClient()
+		self.gd = GDriveClient()
 		self.otp = OneTimePad()
 
 	# TODO: if there is an argument after ls then ls that directory 
 	def do_ls(self, args):
-		"""
-		list directory contents
-
-		Examples:
-		shoebox> ls [dir]
-		"""
+		"""list directory contents"""
 		self.db.ls()
 
 	def do_pwd(self, args): 
@@ -47,9 +42,7 @@ class ShoeboxShell(cmd.Cmd):
 		self.gd.cd(path)
 
 	def do_rm(self, args): 
-		""" 
-		remove directory entries
-		"""
+		""" remove directory entries"""
 		if self.db.is_dir(path): 
 			confirm = raw_input("Deleting this directory will also remove all file contents. Proceed? (y/n)").strip()
 			if confirm == 'y':
@@ -64,6 +57,7 @@ class ShoeboxShell(cmd.Cmd):
 			db.rm(f)
 
 	def do_mv(self, args): 
+		"""move a file or directory"""
 		# Don't do more than 2 args 
 		if len(args) != 2: 
 			self.stdout.write(self.e_args + "\n")
@@ -72,6 +66,7 @@ class ShoeboxShell(cmd.Cmd):
 		tar = args[1]
 
 	def do_cat(self, args): 
+		"""view a file"""
 		# TODO: Error checking 
 		src_file = args[0]
 
@@ -87,7 +82,7 @@ class ShoeboxShell(cmd.Cmd):
 		temp_pt.close()
 
 	def do_mkdir(self, args): 
-		"""make directories"""
+		"""create a directory"""
 		print "hello what up"
 
 	def do_help(self, args): 
