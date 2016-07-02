@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block title %}Sign Up{% endblock %}
+{% block body %}
+<h2>Hey {{ g.user.email }}</h2>
+{% if not google or not dropbox %}
+    <div class="files">You haven't connected enough clouds! <a href="{{ url_for('connect') }}">Connect some to begin!</a></div>
+{% endif %}
+
+<!--if both clouds are connected -->
+{% if google and dropbox %}
+    {% if files %}
+        <div class="files">Here are your files: </div>
+        {% for item in files %}
+        <li>
+            <a href="{{ url_for('file_viewer', filename=item) }}">{{ item }}</a>
+        </li>
+        {% endfor %}
+    {% else %}
+        <div class="files">You don't have any files! Upload some to begin!</div>
+    {% endif %}
+{% endif %}
+{% endblock body %}

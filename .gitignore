@@ -1,10 +1,4 @@
+/flask
+/config
 *.pyc
-*.swp
-*.sparsebundle 
-uploads/*
-client_secrets.json
-token_store.txt
-mycreds.txt
-app.ini
-LOG.txt
-TODO.txt
+*.db

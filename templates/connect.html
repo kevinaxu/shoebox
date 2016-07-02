@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% block title %}Connect your Clouds!{% endblock %}
+
+<ul>
+{% block body %}
+
+{% if google %}
+<li>Google drive already connected!</li>
+{% else %}
+<li><a href="{{ url_for('google') }}">Connect your google drive! </a></li>
+{% endif %}
+
+{% if dropbox %}
+<li>Dropbox already connected!</li>
+{% else %}
+<li><a href="{{ url_for('dropbox_auth_start') }}">Connect your dropbox!</a></li>
+{% endif %}
+</ul>
+
+{% endblock body %}

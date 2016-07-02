@@ -1,0 +1,33 @@
+<!doctype html>
+<title>{% block title %}Welcome{% endblock %} | Shoebox</title>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+<div class="page">
+  <h1>Shoebox</h1>
+  <div class="navigation">
+  {% if g.user %}
+    <a href="{{ url_for('list') }}">File List</a>
+    <a href="{{ url_for('upload') }}">Upload</a>
+
+    <a href="{{ url_for('connect') }}">Connect</a>
+    <a href="{{ url_for('logout') }}">Logout</a>
+  {% else %}
+    <a href="{{ url_for('register') }}">sign up</a>
+    <a href="{{ url_for('login') }}">sign in</a>
+  {% endif %}
+  </div>
+  {% with flashes = get_flashed_messages() %}
+    {% if flashes %}
+      <ul class="flashes">
+      {% for message in flashes %}
+        <li>{{ message }}
+      {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+  <div class="body">
+  {% block body %}{% endblock %}
+  </div>
+  <div class="footer">
+    Shoebox &mdash; A Cloud-Based, Encrypted File Manager
+  </div>
+</div>
